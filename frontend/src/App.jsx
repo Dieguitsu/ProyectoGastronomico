@@ -6,9 +6,13 @@ import Usuario from "./views/usuario";
 import Producto from "./views/producto";
 import Compra from "./views/compra";
 import Almacen from "./views/almacen";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 function App() {
   return (
     <BrowserRouter>
+      <ToastContainer />
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/" element={<Nav />}>

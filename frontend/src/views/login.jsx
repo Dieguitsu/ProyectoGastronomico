@@ -2,21 +2,49 @@ import React, { useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { ChefHat } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios"; // Importamos axios para manejar las solicitudes HTTP.
+import { toast } from "react-toastify";
+import { Url } from "../config";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [correo, setCorreo] = useState("");
+  const [contraseña, setContraseña] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    alert("Login exitoso!");
-    navigate("/usuarios");
-    setLoading(false);
-  };
+    setError(null);
 
+    try {
+      const response = await fetch(`${Url}login/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          correo,
+          contraseña,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Credenciales inválidas. Inténtalo de nuevo.");
+      }
+
+      const data = await response.json();
+      toast.success(data.message);
+      console.log(data);
+      navigate("/usuarios");
+    } catch (err) {
+      console.error(err);
+      setError("Credenciales inválidas. Inténtalo de nuevo.");
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <Container>
       <LoginCard>
@@ -28,20 +56,22 @@ const Login = () => {
         <Title>Bienvenido</Title>
         <Subtitle>Ingresa a tu cuenta</Subtitle>
 
+        {error && <ErrorMessage>{error}</ErrorMessage>}
+
         <Form onSubmit={handleSubmit}>
           <Input
             type="email"
             placeholder="Correo electrónico"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={correo}
+            onChange={(e) => setCorreo(e.target.value)}
             required
           />
 
           <Input
-            type="password"
+            type="contraseña"
             placeholder="Contraseña"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={contraseña}
+            onChange={(e) => setContraseña(e.target.value)}
             required
           />
 
@@ -51,7 +81,7 @@ const Login = () => {
         </Form>
 
         <LinksContainer>
-          <StyledLink to={""}>¿Olvidaste tu contraseña?</StyledLink>
+          <StyledLink href="#">¿Olvidaste tu contraseña?</StyledLink>
         </LinksContainer>
 
         <Footer>
@@ -68,7 +98,15 @@ const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 `;
-
+const ErrorMessage = styled.div`
+  color: #ff3333;
+  background: #ffe6e6;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+`;
 const Container = styled.div`
   min-height: 100vh;
   display: flex;

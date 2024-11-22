@@ -21,6 +21,7 @@ import {
   FormHeader,
   FormTitle,
   Input,
+  InputSelect,
   Label,
   PageContainer,
   SearchContainer,
@@ -30,20 +31,57 @@ import {
   Td,
   Th,
 } from "../style/styleCrud";
-
+import { useGet } from "../hook/useGet";
+import { formatFecha } from "../utils/formatDate";
+import { usePost } from "../hook/usePost";
+import { useUpdate } from "../hook/usePut";
+import { useDelete } from "../hook/useDelete";
 const Usuario = () => {
   const [items, setItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState(null);
+  function obtenerFechaActualISO() {
+    return new Date().toISOString();
+  }
+
+  const fechaActual = obtenerFechaActualISO();
+  const [form, setForm] = useState({
+    nombre: "",
+    correo: "",
+    contraseña: "",
+    rol: "",
+    fecha_registro: fechaActual,
+  });
+  const { data } = useGet("usuario");
+  const { postData } = usePost("usuario");
+  const { updateData } = useUpdate("usuario");
+  const { deleteData } = useDelete("usuario");
 
   useEffect(() => {
-    setItems([
-      { id: 1, nombre: "Producto 1", precio: 100, stock: 50 },
-      { id: 2, nombre: "Producto 2", precio: 200, stock: 30 },
-    ]);
-  }, []);
+    if (data) {
+      setItems(data);
+    }
+  }, [data]);
+  useEffect(() => {
+    if (currentItem) {
+      setForm({
+        nombre: currentItem.nombre,
+        correo: currentItem.correo,
+        contraseña: currentItem.contraseña,
+        rol: currentItem.rol,
+        fecha_registro: currentItem.fecha_registro,
+      });
+    }
+  }, [currentItem]);
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm({
+      ...form,
+      [name]: value,
+    });
+  };
   const exportToPDF = () => {
     const doc = new jsPDF();
     doc.autoTable({
@@ -57,20 +95,39 @@ const Usuario = () => {
     });
     doc.save("productos.pdf");
   };
-
   const exportToExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(items);
+    const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Productos");
     XLSX.writeFile(wb, "productos.xlsx");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (currentItem) {
+      const updatedUser = await updateData(currentItem.id, form);
+      setItems(
+        items.map((item) => (item.id === updatedUser.id ? updatedUser : item))
+      );
+    } else {
+      const newUser = await postData(form);
+      setItems([...items, newUser]);
+    }
     setIsFormOpen(false);
+    setCurrentItem(null);
+    setForm({
+      nombre: "",
+      correo: "",
+      contraseña: "",
+      rol: "",
+      fecha_registro: fechaActual,
+    });
   };
-
-  const filteredItems = items.filter((item) =>
+  const handleDelete = async (id) => {
+    await deleteData(id);
+    setItems(items.filter((item) => item.id !== id));
+  };
+  const filteredItems = data?.filter((item) =>
     item.nombre.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -109,22 +166,22 @@ const Usuario = () => {
             <tr>
               <Th>ID</Th>
               <Th>Nombre</Th>
-              <Th>Usuario</Th>
-              <Th>Rol</Th>
               <Th>Correo</Th>
-              <Th>Telefono</Th>
+              <Th>Contraseña</Th>
+              <Th>Rol</Th>
+              <Th>Fecha registro</Th>
               <Th>Acciones</Th>
             </tr>
           </thead>
           <tbody>
-            {filteredItems.map((item) => (
+            {filteredItems?.map((item) => (
               <tr key={item.id}>
                 <Td>{item.id}</Td>
                 <Td>{item.nombre}</Td>
-                <Td>{item.nombre}</Td>
-                <Td>{item.nombre}</Td>
-                <Td>Bs{item.precio}</Td>
-                <Td>{item.stock}</Td>
+                <Td>{item.correo}</Td>
+                <Td>******</Td>
+                <Td>{item.rol}</Td>
+                <Th>{formatFecha(item.fecha_registro)}</Th>
                 <Td>
                   <ActionButtons>
                     <Button
@@ -136,7 +193,10 @@ const Usuario = () => {
                     >
                       <Edit2 size={16} />
                     </Button>
-                    <Button variant="danger">
+                    <Button
+                      variant="danger"
+                      onClick={() => handleDelete(item.id)}
+                    >
                       <Trash2 size={16} />
                     </Button>
                   </ActionButtons>
@@ -150,7 +210,7 @@ const Usuario = () => {
       <FormContainer isOpen={isFormOpen}>
         <FormHeader>
           <FormTitle>
-            {currentItem ? "Editar Producto" : "Nuevo Producto"}
+            {currentItem ? "Editar usuario" : "Nuevo usuario"}
           </FormTitle>
           <Button
             variant="secondary"
@@ -162,39 +222,49 @@ const Usuario = () => {
             <X size={20} />
           </Button>
         </FormHeader>
-
         <form onSubmit={handleSubmit}>
           <FormGroup>
             <Label>Nombre</Label>
             <Input
               type="text"
-              value={currentItem?.nombre || ""}
-              placeholder="Nombre del producto"
+              name="nombre"
+              value={form.nombre}
+              onChange={handleChange}
+              placeholder="Nombre"
             />
           </FormGroup>
-
           <FormGroup>
-            <Label>Precio</Label>
+            <Label>Correo</Label>
             <Input
-              type="number"
-              value={currentItem?.precio || ""}
-              placeholder="Precio del producto"
+              type="email"
+              name="correo"
+              value={form.correo}
+              onChange={handleChange}
+              placeholder="Correo"
             />
           </FormGroup>
-
           <FormGroup>
-            <Label>Stock</Label>
+            <Label>Contraseña</Label>
             <Input
-              type="number"
-              value={currentItem?.stock || ""}
-              placeholder="Stock disponible"
+              type="password"
+              name="contraseña"
+              value={form.contraseña}
+              onChange={handleChange}
+              placeholder="Contraseña"
             />
           </FormGroup>
-
+          <FormGroup>
+            <Label>Rol</Label>
+            <InputSelect name="rol" onChange={handleChange} value={form.rol}>
+              <option value="dueño">Dueño</option>
+              <option value="chef">Chef</option>
+              <option value="jefe de area">Jefe de área</option>
+              <option value="cocinero">Cocinero</option>
+            </InputSelect>
+          </FormGroup>
           <ButtonGroup>
             <Button type="submit" variant="primary">
-              <Save size={20} />
-              Guardar
+              <Save size={20} /> Guardar
             </Button>
             <Button
               type="button"
@@ -204,8 +274,7 @@ const Usuario = () => {
                 setCurrentItem(null);
               }}
             >
-              <X size={20} />
-              Cancelar
+              <X size={20} /> Cancelar
             </Button>
           </ButtonGroup>
         </form>

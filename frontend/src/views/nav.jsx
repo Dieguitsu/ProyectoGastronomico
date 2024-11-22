@@ -10,78 +10,86 @@ import {
   LogOut,
 } from "lucide-react";
 
+const PRIMARY_COLOR = "#ff5733";
+
 const Nav = () => {
   return (
     <NavContainer>
-      <NavContent>
-        <LogoContainer>
-          <IconCircle>
-            <ChefHat size={28} color={PRIMARY_COLOR} />
-          </IconCircle>
-          <RestaurantName>Sistema de Gestión</RestaurantName>
-        </LogoContainer>
-        <ButtonsContainer>
-          <NavLink to="/usuarios">
-            <User size={20} />
-            Usuario
-          </NavLink>
+      <Sidebar>
+        <SidebarContent>
+          <LogoContainer>
+            <IconCircle>
+              <ChefHat size={28} color={PRIMARY_COLOR} />
+            </IconCircle>
+            <RestaurantName>Sistema de Gestión</RestaurantName>
+          </LogoContainer>
+          
+          <ButtonsContainer>
+            <NavLink to="/usuarios">
+              <User size={20} />
+              Usuario
+            </NavLink>
 
-          <NavLink to="/productos">
-            <Package size={20} />
-            Producto
-          </NavLink>
+            <NavLink to="/productos">
+              <Package size={20} />
+              Producto
+            </NavLink>
 
-          <NavLink to="/compras">
-            <ShoppingCart size={20} />
-            Compra
-          </NavLink>
+            <NavLink to="/compras">
+              <ShoppingCart size={20} />
+              Compra
+            </NavLink>
 
-          <NavLink to="/almacen">
-            <Archive size={20} />
-            Almacén
-          </NavLink>
-          <NavLinkLogout to="/">
-            <LogOut size={20} />
-            Salir
-          </NavLinkLogout>
-        </ButtonsContainer>
-      </NavContent>
-      <DivOutled>
+            <NavLink to="/almacen">
+              <Archive size={20} />
+              Almacén
+            </NavLink>
+            
+            <NavLinkLogout to="/">
+              <LogOut size={20} />
+              Salir
+            </NavLinkLogout>
+          </ButtonsContainer>
+        </SidebarContent>
+      </Sidebar>
+      
+      <MainContent>
         <Outlet />
-      </DivOutled>
+      </MainContent>
     </NavContainer>
   );
 };
 
 export default Nav;
-const PRIMARY_COLOR = "#ff5733";
 
-const NavContainer = styled.nav`
-  width: 100%;
-  height: 100%;
+const NavContainer = styled.div`
   display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
+  height: 100vh;
+  width: 100%;
 `;
 
-const NavContent = styled.div`
-  width: 100%;
-  margin: 0 auto;
-  padding: 0 10rem;
-  height: 4.5rem;
+const Sidebar = styled.nav`
+  width: 250px;
+  background: white;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  height: 100%;
+  position: fixed;
+  left: 0;
+  top: 0;
+`;
+
+const SidebarContent = styled.div`
+  padding: 2rem;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 2px 10px rgba(255, 87, 51, 0.1);
+  flex-direction: column;
+  height: 100%;
 `;
 
 const LogoContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
+  margin-bottom: 2rem;
 `;
 
 const IconCircle = styled.div`
@@ -102,40 +110,8 @@ const RestaurantName = styled.h1`
 
 const ButtonsContainer = styled.div`
   display: flex;
+  flex-direction: column;
   gap: 1rem;
-`;
-const NavLinkLogout = styled(Link)`
-  display: flex;
-  align-items: center;
-  padding: 0.75rem 1.25rem;
-  border: none;
-  border-radius: 0.75rem;
-  background: rgba(255, 87, 51, 0.08);
-  color: ${PRIMARY_COLOR};
-  font-size: 0.938rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-decoration: none;
-
-  &:hover {
-    background: rgba(255, 87, 51, 0.08);
-    transform: translateY(-1px);
-  }
-
-  &:active {
-    transform: translateY(0px);
-  }
-
-  svg {
-    margin-right: 0.5rem;
-    stroke-width: 2px;
-  }
-
-  &.active {
-    background: rgba(255, 87, 51, 0.1);
-    color: ${PRIMARY_COLOR};
-  }
 `;
 
 const NavLink = styled(Link)`
@@ -153,7 +129,6 @@ const NavLink = styled(Link)`
   text-decoration: none;
 
   &:hover {
-    background: rgba(255, 87, 51, 0.08);
     color: ${PRIMARY_COLOR};
     transform: translateY(-1px);
   }
@@ -168,11 +143,20 @@ const NavLink = styled(Link)`
   }
 
   &.active {
-    background: rgba(255, 87, 51, 0.1);
     color: ${PRIMARY_COLOR};
   }
 `;
-const DivOutled = styled.div`
-  width: 100%;
-  height: calc(100% - 4.5rem);
+
+const NavLinkLogout = styled(NavLink)`
+  margin-top: auto;
+  color: ${PRIMARY_COLOR};
+
+`;
+
+const MainContent = styled.main`
+  margin-left: 250px;
+  width: calc(100% - 250px);
+  height: 100%;
+  overflow-y: auto;
+  padding: 2rem;
 `;

@@ -165,7 +165,19 @@ export const Label = styled.label`
   color: #374151;
   font-weight: 500;
 `;
+export const InputSelect = styled.select`
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
 
+  &:focus {
+    outline: none;
+    border-color: ${PRIMARY_COLOR};
+    box-shadow: 0 0 0 2px rgba(255, 87, 51, 0.1);
+  }
+`;
 export const Input = styled.input`
   width: 100%;
   padding: 0.75rem;
