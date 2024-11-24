@@ -8,6 +8,7 @@ import {
   Trash2,
   Save,
   X,
+  ArrowUp,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -32,20 +33,22 @@ import {
   Th,
 } from "../style/styleCrud";
 import { useGet } from "../hook/useGet";
-import { formatFecha } from "../utils/formatDate";
 import { usePost } from "../hook/usePost";
 import { useUpdate } from "../hook/usePut";
 import { useDelete } from "../hook/useDelete";
+import { fechaActual } from "../utils/dateDay";
+import { CloseButton, Form, Modal, ModalContent } from "../style/tareaStyled";
+import { useUser } from "../context/useContext";
 const Producto = () => {
-  const [items, setItems] = useState([]);
+  const { user } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [currentItem, setCurrentItem] = useState(null);
-  function obtenerFechaActualISO() {
-    return new Date().toISOString();
-  }
+  const [showModal, setShowModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  const { postData: postCocina } = usePost("crear-pedido");
 
-  const fechaActual = obtenerFechaActualISO();
+  const [currentData, setCurrentData] = useState(null);
   const [form, setForm] = useState({
     nombre: "",
     descripcion: "",
@@ -54,27 +57,22 @@ const Producto = () => {
     categoria: "",
     fecha_registro: fechaActual,
   });
-  const { data } = useGet("producto");
+  const { data: producto, reload } = useGet("producto");
   const { postData } = usePost("producto");
   const { updateData } = useUpdate("producto");
   const { deleteData } = useDelete("producto");
 
   useEffect(() => {
-    if (data) {
-      setItems(data);
-    }
-  }, [data]);
-  useEffect(() => {
-    if (currentItem) {
+    if (currentData) {
       setForm({
-        nombre: currentItem.nombre,
-        descripcion: currentItem.descripcion,
-        precio: currentItem.precio,
-        stock: currentItem.stock,
-        categoria: currentItem.categoria,
+        nombre: currentData.nombre,
+        descripcion: currentData.descripcion,
+        precio: currentData.precio,
+        stock: currentData.stock,
+        categoria: currentData.categoria,
       });
     }
-  }, [currentItem]);
+  }, [currentData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -87,7 +85,7 @@ const Producto = () => {
     const doc = new jsPDF();
     doc.autoTable({
       head: [["ID", "Nombre", "Descripcion", "Precio", "Stock", "Categoria"]],
-      body: items.map((item) => [
+      body: producto.map((item) => [
         item.id,
         item.nombre,
         item.descripcion,
@@ -99,7 +97,7 @@ const Producto = () => {
     doc.save("productos.pdf");
   };
   const exportToExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(data);
+    const ws = XLSX.utils.json_to_sheet(producto);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Productos");
     XLSX.writeFile(wb, "productos.xlsx");
@@ -107,17 +105,15 @@ const Producto = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (currentItem) {
-      const updatedUser = await updateData(currentItem.id, form);
-      setItems(
-        items.map((item) => (item.id === updatedUser.id ? updatedUser : item))
-      );
+    if (currentData) {
+      await updateData(currentData.id, form);
+      reload();
     } else {
-      const newUser = await postData(form);
-      setItems([...items, newUser]);
+      await postData(form);
+      reload();
     }
     setIsFormOpen(false);
-    setCurrentItem(null);
+    setCurrentData(null);
     setForm({
       nombre: "",
       descripcion: "",
@@ -127,11 +123,24 @@ const Producto = () => {
       fecha_registro: fechaActual,
     });
   };
+  const handleSendToAlmacen = async () => {
+    if (selectedProduct) {
+      await postCocina({
+        usuario: user.data.id,
+        producto: selectedProduct.id,
+        cantidad: quantity,
+        estado: "listo",
+      });
+      setShowModal(false);
+      setQuantity(1);
+      reload();
+    }
+  };
   const handleDelete = async (id) => {
     await deleteData(id);
-    setItems(items.filter((item) => item.id !== id));
+    reload();
   };
-  const filteredItems = data?.filter((item) =>
+  const filteredItems = producto?.filter((item) =>
     item.nombre.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -164,7 +173,6 @@ const Producto = () => {
             </Button>
           </ButtonGroup>
         </TableHeader>
-
         <Table>
           <thead>
             <tr>
@@ -178,12 +186,12 @@ const Producto = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredItems?.map((item) => (
-              <tr key={item.id}>
-                <Td>{item.id}</Td>
+            {filteredItems?.map((item, i) => (
+              <tr key={i}>
+                <Td>{i + 1}</Td>
                 <Td>{item.nombre}</Td>
                 <Td>{item.descripcion}</Td>
-                <Td>{item.precio}</Td>
+                <Td>{item.precio} Bs</Td>
                 <Td>{item.stock}</Td>
                 <Th>{item.categoria}</Th>
                 <Td>
@@ -191,7 +199,7 @@ const Producto = () => {
                     <Button
                       variant="secondary"
                       onClick={() => {
-                        setCurrentItem(item);
+                        setCurrentData(item);
                         setIsFormOpen(true);
                       }}
                     >
@@ -203,6 +211,15 @@ const Producto = () => {
                     >
                       <Trash2 size={16} />
                     </Button>
+                    <Button
+                      variant="primary"
+                      onClick={() => {
+                        setSelectedProduct(item);
+                        setShowModal(true);
+                      }}
+                    >
+                      Enviar almacén <ArrowUp size={16} />
+                    </Button>
                   </ActionButtons>
                 </Td>
               </tr>
@@ -210,17 +227,55 @@ const Producto = () => {
           </tbody>
         </Table>
       </TableContainer>
-
+      {showModal && (
+        <Modal>
+          <ModalContent>
+            <button
+              style={{
+                background: "none",
+                border: "none",
+                fontSize: "1.5rem",
+                position: "absolute",
+                top: "10px",
+                right: "10px",
+                cursor: "pointer",
+              }}
+              onClick={() => setShowModal(false)}
+            >
+              <X />
+            </button>
+            <h2 style={{ marginBottom: "20px" }}>
+              Enviar al almacén: {selectedProduct?.nombre}
+            </h2>
+            <h3 style={{ marginBottom: "20px" }}>
+              Cantidad: {selectedProduct?.stock}
+            </h3>
+            <div style={{ marginBottom: "20px" }}>
+              <Label>Cantidad a enviar</Label>
+              <Input
+                type="number"
+                min="1"
+                value={quantity}
+                onChange={(e) => setQuantity(parseInt(e.target.value, 10))}
+                placeholder="Ingrese cantidad"
+              />
+            </div>
+            <Button variant="primary" onClick={handleSendToAlmacen}>
+              Enviar
+            </Button>
+          </ModalContent>
+        </Modal>
+      )}
       <FormContainer isOpen={isFormOpen}>
         <FormHeader>
           <FormTitle>
-            {currentItem ? "Editar producto" : "Nuevo producto"}
+            {currentData ? "Editar producto" : "Nuevo producto"}
           </FormTitle>
           <Button
             variant="secondary"
             onClick={() => {
               setIsFormOpen(false);
-              setCurrentItem(null);
+              setCurrentData(null);
             }}
           >
             <X size={20} />
@@ -286,7 +341,7 @@ const Producto = () => {
               variant="secondary"
               onClick={() => {
                 setIsFormOpen(false);
-                setCurrentItem(null);
+                setCurrentData(null);
               }}
             >
               <X size={20} /> Cancelar

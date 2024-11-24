@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Url } from "../config";
+import { toast } from "react-toastify";
 export const usePost = (ruta) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -20,12 +21,9 @@ export const usePost = (ruta) => {
         console.log(response.statusText);
         throw new Error(`Error: ${response.statusText}`);
       }
-
-      const data = await response.json();
-      return data;
+      return toast.success("Se agrego correctamente");
     } catch (err) {
-      setError(err.message);
-      console.error(err);
+      toast.error(err.message);
     } finally {
       setIsLoading(false);
     }

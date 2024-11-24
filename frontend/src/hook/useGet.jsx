@@ -1,9 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Url } from "../config";
+
 export function useGet(ruta) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const reload = useCallback(() => {
+    setReloadKey((prevKey) => prevKey + 1);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -36,7 +42,7 @@ export function useGet(ruta) {
     return () => {
       isMounted = false;
     };
-  }, [ruta]);
+  }, [ruta, reloadKey]);
 
-  return { data, error, loading };
+  return { data, error, loading, reload };
 }

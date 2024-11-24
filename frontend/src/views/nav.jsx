@@ -8,6 +8,8 @@ import {
   Archive,
   ChefHat,
   LogOut,
+  LogIn,
+  Book
 } from "lucide-react";
 
 const PRIMARY_COLOR = "#ff5733";
@@ -23,11 +25,19 @@ const Nav = () => {
             </IconCircle>
             <RestaurantName>Sistema de Gestión</RestaurantName>
           </LogoContainer>
-          
+
           <ButtonsContainer>
             <NavLink to="/usuarios">
               <User size={20} />
               Usuario
+            </NavLink>
+            <NavLink to="/ingresos">
+              <LogIn size={20} />
+              Ingresos
+            </NavLink>
+            <NavLink to="/tareas">
+              <Book size={20} />
+              Tareas
             </NavLink>
 
             <NavLink to="/productos">
@@ -44,7 +54,7 @@ const Nav = () => {
               <Archive size={20} />
               Almacén
             </NavLink>
-            
+
             <NavLinkLogout to="/">
               <LogOut size={20} />
               Salir
@@ -52,7 +62,7 @@ const Nav = () => {
           </ButtonsContainer>
         </SidebarContent>
       </Sidebar>
-      
+
       <MainContent>
         <Outlet />
       </MainContent>
@@ -71,7 +81,7 @@ const NavContainer = styled.div`
 const Sidebar = styled.nav`
   width: 250px;
   background: white;
-  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
   height: 100%;
   position: fixed;
   left: 0;
@@ -150,7 +160,6 @@ const NavLink = styled(Link)`
 const NavLinkLogout = styled(NavLink)`
   margin-top: auto;
   color: ${PRIMARY_COLOR};
-
 `;
 
 const MainContent = styled.main`

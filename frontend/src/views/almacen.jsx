@@ -16,12 +16,6 @@ import {
   ActionButtons,
   Button,
   ButtonGroup,
-  FormContainer,
-  FormGroup,
-  FormHeader,
-  FormTitle,
-  Input,
-  Label,
   PageContainer,
   SearchContainer,
   Table,
@@ -30,50 +24,33 @@ import {
   Td,
   Th,
 } from "../style/styleCrud";
+import { useGet } from "../hook/useGet";
 
 const Almacen = () => {
-  const [items, setItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [currentItem, setCurrentItem] = useState(null);
-
-  useEffect(() => {
-    setItems([
-      { id: 1, nombre: "Producto 1", precio: 100, stock: 50 },
-      { id: 2, nombre: "Producto 2", precio: 200, stock: 30 },
-    ]);
-  }, []);
-
- 
+  const { data } = useGet("pedidos-recientes");
+  const { data: dataAll } = useGet("pedido-cocina");
   const exportToPDF = () => {
     const doc = new jsPDF();
     doc.autoTable({
-      head: [["ID", "Nombre", "Precio", "Stock"]],
-      body: items.map((item) => [
+      head: [["ID", "Usuario", "producto", "cantidad", "estado"]],
+      body: dataAll?.map((item) => [
         item.id,
-        item.nombre,
-        item.precio,
-        item.stock,
+        item.usuario,
+        item.producto,
+        item.cantidad,
+        item.estado,
       ]),
     });
-    doc.save("productos.pdf");
+    doc.save("reporteAlmacen.pdf");
   };
 
   const exportToExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(items);
+    const ws = XLSX.utils.json_to_sheet(dataAll);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Productos");
-    XLSX.writeFile(wb, "productos.xlsx");
+    XLSX.utils.book_append_sheet(wb, ws, "Almacen");
+    XLSX.writeFile(wb, "almacen.xlsx");
   };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setIsFormOpen(false);
-  };
-
-  const filteredItems = items.filter((item) =>
-    item.nombre.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   return (
     <PageContainer>
@@ -83,7 +60,7 @@ const Almacen = () => {
             <Search size={20} />
             <input
               type="text"
-              placeholder="Buscar producto..."
+              placeholder="Buscar almacen..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -98,10 +75,6 @@ const Almacen = () => {
               <FileSpreadsheet size={20} />
               Excel
             </Button>
-            <Button variant="primary" onClick={() => setIsFormOpen(true)}>
-              <Plus size={20} />
-              Agregar
-            </Button>
           </ButtonGroup>
         </TableHeader>
 
@@ -110,103 +83,30 @@ const Almacen = () => {
             <tr>
               <Th>ID</Th>
               <Th>Nombre</Th>
-              <Th>Precio</Th>
-              <Th>Stock</Th>
-              <Th>Acciones</Th>
+              <Th>Producto</Th>
+              <Th>Cantidad</Th>
             </tr>
           </thead>
           <tbody>
-            {filteredItems.map((item) => (
-              <tr key={item.id}>
-                <Td>{item.id}</Td>
-                <Td>{item.nombre}</Td>
-                <Td>Bs{item.precio}</Td>
-                <Td>{item.stock}</Td>
-                <Td>
-                  <ActionButtons>
-                    <Button
-                      variant="secondary"
-                      onClick={() => {
-                        setCurrentItem(item);
-                        setIsFormOpen(true);
-                      }}
-                    >
-                      <Edit2 size={16} />
-                    </Button>
-                    <Button variant="danger">
-                      <Trash2 size={16} />
-                    </Button>
-                  </ActionButtons>
-                </Td>
-              </tr>
-            ))}
+            {data?.pedidos
+              ?.filter(
+                (item) =>
+                  item.usuario
+                    .toLowerCase()
+                    .includes(searchTerm.toLowerCase()) ||
+                  item.producto.toLowerCase().includes(searchTerm.toLowerCase())
+              )
+              .map((item, i) => (
+                <tr key={i}>
+                  <Td>{i + 1}</Td>
+                  <Td>{item.usuario}</Td>
+                  <Td>{item.producto}</Td>
+                  <Td>{item.cantidad}</Td>
+                </tr>
+              ))}
           </tbody>
         </Table>
       </TableContainer>
-
-      <FormContainer isOpen={isFormOpen}>
-        <FormHeader>
-          <FormTitle>
-            {currentItem ? "Editar Producto" : "Nuevo Producto"}
-          </FormTitle>
-          <Button
-            variant="secondary"
-            onClick={() => {
-              setIsFormOpen(false);
-              setCurrentItem(null);
-            }}
-          >
-            <X size={20} />
-          </Button>
-        </FormHeader>
-
-        <form onSubmit={handleSubmit}>
-          <FormGroup>
-            <Label>Nombre</Label>
-            <Input
-              type="text"
-              value={currentItem?.nombre || ""}
-              placeholder="Nombre del producto"
-            />
-          </FormGroup>
-
-          <FormGroup>
-            <Label>Precio</Label>
-            <Input
-              type="number"
-              value={currentItem?.precio || ""}
-              placeholder="Precio del producto"
-            />
-          </FormGroup>
-
-          <FormGroup>
-            <Label>Stock</Label>
-            <Input
-              type="number"
-              value={currentItem?.stock || ""}
-              placeholder="Stock disponible"
-            />
-          </FormGroup>
-
-          <ButtonGroup>
-            <Button type="submit" variant="primary">
-              <Save size={20} />
-              Guardar
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                setIsFormOpen(false);
-                setCurrentItem(null);
-              }}
-            >
-              <X size={20} />
-              Cancelar
-            </Button>
-          </ButtonGroup>
-        </form>
-      </FormContainer>
     </PageContainer>
   );
 };

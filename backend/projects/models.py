@@ -19,12 +19,6 @@ class Usuario(models.Model):
     rol = models.CharField(max_length=20, choices=ROLES)
     fecha_registro = models.DateTimeField(auto_now_add=True)
 
-    def save(self, *args, **kwargs):
-        # Cifrar la contraseña si no está cifrada
-        if not self.pk or not check_password(self.contraseña, self.contraseña):
-            self.contraseña = make_password(self.contraseña)
-        super().save(*args, **kwargs)
-
     def __str__(self):
         return self.nombre
 

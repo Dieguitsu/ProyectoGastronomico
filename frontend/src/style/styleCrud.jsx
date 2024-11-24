@@ -56,7 +56,7 @@ export const TableContainer = styled.div`
   border-radius: 1rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  margin-top: 1.5rem;
+  margin: 1.5rem;
 `;
 
 export const TableHeader = styled.div`
@@ -153,6 +153,7 @@ export const FormTitle = styled.h2`
   font-size: 1.5rem;
   color: #111827;
   font-weight: 600;
+  margin: 10px;
 `;
 
 export const FormGroup = styled.div`

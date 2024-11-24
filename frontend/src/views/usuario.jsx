@@ -36,44 +36,36 @@ import { formatFecha } from "../utils/formatDate";
 import { usePost } from "../hook/usePost";
 import { useUpdate } from "../hook/usePut";
 import { useDelete } from "../hook/useDelete";
+import { fechaActual } from "../utils/dateDay";
 const Usuario = () => {
-  const [items, setItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [currentItem, setCurrentItem] = useState(null);
-  function obtenerFechaActualISO() {
-    return new Date().toISOString();
-  }
+  const [currentData, setCurrentItem] = useState(null);
 
-  const fechaActual = obtenerFechaActualISO();
   const [form, setForm] = useState({
     nombre: "",
     correo: "",
     contraseña: "",
-    rol: "",
+    rol: "cocinero",
     fecha_registro: fechaActual,
   });
-  const { data } = useGet("usuario");
+  const { data: usuario, reload } = useGet("usuario");
   const { postData } = usePost("usuario");
   const { updateData } = useUpdate("usuario");
   const { deleteData } = useDelete("usuario");
 
+
   useEffect(() => {
-    if (data) {
-      setItems(data);
-    }
-  }, [data]);
-  useEffect(() => {
-    if (currentItem) {
+    if (currentData) {
       setForm({
-        nombre: currentItem.nombre,
-        correo: currentItem.correo,
-        contraseña: currentItem.contraseña,
-        rol: currentItem.rol,
-        fecha_registro: currentItem.fecha_registro,
+        nombre: currentData.nombre,
+        correo: currentData.correo,
+        contraseña: currentData.contraseña,
+        rol: currentData.rol,
+        fecha_registro: currentData.fecha_registro,
       });
     }
-  }, [currentItem]);
+  }, [currentData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -85,33 +77,33 @@ const Usuario = () => {
   const exportToPDF = () => {
     const doc = new jsPDF();
     doc.autoTable({
-      head: [["ID", "Nombre", "Precio", "Stock"]],
-      body: items.map((item) => [
+      head: [["ID", "Nombre", "Correo", "Rol", "Fecha registro"]],
+      body: usuario.map((item) => [
         item.id,
         item.nombre,
-        item.precio,
-        item.stock,
+        item.correo,
+        item.rol,
+        item.fecha_registro,
       ]),
     });
-    doc.save("productos.pdf");
+    doc.save("usuario.pdf");
   };
   const exportToExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(data);
+    const ws = XLSX.utils.json_to_sheet(usuario);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Productos");
-    XLSX.writeFile(wb, "productos.xlsx");
+    XLSX.utils.book_append_sheet(wb, ws, "Usuario");
+    XLSX.writeFile(wb, "usuario.xlsx");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (currentItem) {
-      const updatedUser = await updateData(currentItem.id, form);
-      setItems(
-        items.map((item) => (item.id === updatedUser.id ? updatedUser : item))
-      );
+    if (currentData) {
+      await updateData(currentData.id, form);
+      reload();
     } else {
-      const newUser = await postData(form);
-      setItems([...items, newUser]);
+      console.log(form);
+      await postData(form);
+      reload();
     }
     setIsFormOpen(false);
     setCurrentItem(null);
@@ -119,16 +111,16 @@ const Usuario = () => {
       nombre: "",
       correo: "",
       contraseña: "",
-      rol: "",
+      rol: "cocinero",
       fecha_registro: fechaActual,
     });
   };
   const handleDelete = async (id) => {
     await deleteData(id);
-    setItems(items.filter((item) => item.id !== id));
+    reload();
   };
-  const filteredItems = data?.filter((item) =>
-    item.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredItems = usuario?.filter((user) =>
+    user.nombre.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -164,7 +156,7 @@ const Usuario = () => {
         <Table>
           <thead>
             <tr>
-              <Th>ID</Th>
+              <Th>Nro</Th>
               <Th>Nombre</Th>
               <Th>Correo</Th>
               <Th>Contraseña</Th>
@@ -174,9 +166,9 @@ const Usuario = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredItems?.map((item) => (
-              <tr key={item.id}>
-                <Td>{item.id}</Td>
+            {filteredItems?.map((item, i) => (
+              <tr key={i}>
+                <Td>{i + 1}</Td>
                 <Td>{item.nombre}</Td>
                 <Td>{item.correo}</Td>
                 <Td>******</Td>
@@ -210,7 +202,7 @@ const Usuario = () => {
       <FormContainer isOpen={isFormOpen}>
         <FormHeader>
           <FormTitle>
-            {currentItem ? "Editar usuario" : "Nuevo usuario"}
+            {currentData ? "Editar usuario" : "Nuevo usuario"}
           </FormTitle>
           <Button
             variant="secondary"
@@ -256,10 +248,10 @@ const Usuario = () => {
           <FormGroup>
             <Label>Rol</Label>
             <InputSelect name="rol" onChange={handleChange} value={form.rol}>
+              <option value="cocinero">Cocinero</option>
               <option value="dueño">Dueño</option>
               <option value="chef">Chef</option>
               <option value="jefe de area">Jefe de área</option>
-              <option value="cocinero">Cocinero</option>
             </InputSelect>
           </FormGroup>
           <ButtonGroup>

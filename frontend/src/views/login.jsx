@@ -5,14 +5,14 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios"; // Importamos axios para manejar las solicitudes HTTP.
 import { toast } from "react-toastify";
 import { Url } from "../config";
-
+import { useUser } from "../context/useContext";
 const Login = () => {
   const [correo, setCorreo] = useState("");
   const [contraseña, setContraseña] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-
+  const { login } = useUser();
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -36,7 +36,7 @@ const Login = () => {
 
       const data = await response.json();
       toast.success(data.message);
-      console.log(data);
+      login(data);
       navigate("/usuarios");
     } catch (err) {
       console.error(err);
