@@ -125,8 +125,14 @@ const Producto = () => {
   };
   const handleSendToAlmacen = async () => {
     if (selectedProduct) {
+      console.log({
+        usuario: user?.data?.id,
+        producto: selectedProduct.id,
+        cantidad: quantity,
+        estado: "listo",
+      })
       await postCocina({
-        usuario: user.data.id,
+        usuario: user?.id,
         producto: selectedProduct.id,
         cantidad: quantity,
         estado: "listo",

@@ -57,7 +57,7 @@ const Compra = () => {
       detalles: [...prevForm.detalles, producto],
     }));
   };
-
+  console.log(user);
   const agregarProducto = () => {
     const productoSeleccionado = productoData.find(
       (producto) => producto.id === parseInt(nuevoProducto.producto_id)
@@ -91,7 +91,7 @@ const Compra = () => {
       await updateData(currentItem.id, form);
     } else {
       await postData({
-        usuario_id: user.data.id,
+        usuario_id: user?.id,
         detalles: form.detalles.map((detalle) => ({
           cantidad: parseInt(detalle.cantidad, 10),
           precio_unitario: parseFloat(detalle.precio_unitario),

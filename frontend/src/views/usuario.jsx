@@ -54,7 +54,6 @@ const Usuario = () => {
   const { updateData } = useUpdate("usuario");
   const { deleteData } = useDelete("usuario");
 
-
   useEffect(() => {
     if (currentData) {
       setForm({
